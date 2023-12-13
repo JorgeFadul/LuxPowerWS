@@ -1,9 +1,10 @@
 import os
 import pandas as pd
 import xlrd
+import secret
 
 # Ruta de la carpeta que contiene los archivos Excel
-path = "C:/Users/jorge/OneDrive/Escritorio/Archivos CorpTesla/LuxPowerWS/TablasExcel/MZ Venao Solar - Octubre"
+path = secret.download_path
 
 # Extraer el nombre de la carpeta
 nombre_carpeta = os.path.basename(path)
@@ -43,30 +44,28 @@ def extract(carpeta_input):
                     datos.append(df_seleccionado)
                 else:
                     print(f"No hay datos en la hoja '{nombre_hoja}' del archivo: {archivo}")
-    if datos:
-        # Combinar todos los datos en un solo DataFrame
+    if not len(datos) == 0:
         datos_combinados = pd.concat(datos, ignore_index=True)
         return datos_combinados
-    else:
-        return "No se encontraron datos"
 
-def transform(datos=extract(path)):
-    if datos.empty:
-        print("No se encontraron datos en ninguno de los archivos.")
+def transform(datos_t):
+    
+    if datos_t.empty:
+        print("TRANSFORM No se encontraron datos en ninguno de los archivos.")
         return
 
     # Transformar la columna 'Time' a formato de fecha y hora
-    datos['Time'] = pd.to_datetime(datos['Time'], errors='coerce')
+    datos_t['Time'] = pd.to_datetime(datos_t['Time'], errors='coerce')
 
     # Transformar las columnas 'vBat', 'soc', 'vacr' y 'vepsr' a números
-    columnas_a_numeros = ['vBat', 'vacr', 'vepsr']
+    columnas_a_numeros = ['vBat', "pCharge", "pDisCharge", 'vacr', 'vepsr', "pToUser", "pLoad"]
     for columna in columnas_a_numeros:
-        datos[columna] = pd.to_numeric(datos[columna], errors='coerce')
+        datos_t[columna] = pd.to_numeric(datos_t[columna], errors='coerce')
 
     # Transformar la columna 'soc' a números (porcentajes almacenados como texto)
-    datos['soc'] = datos['soc'].str.rstrip('%').astype('float') / 100.0
+    datos_t['soc'] = datos_t['soc'].str.rstrip('%').astype('float') / 100.0
 
-    return datos
+    return datos_t
 
 def dashboard(writer, datos):
     # Crear una hoja vacía llamada 'Dashboard'
@@ -101,8 +100,8 @@ def dashboard(writer, datos):
 
 
 
-def load(datos=transform()):
-    if not datos.empty:
+def load(datos_l):
+    if not datos_l.empty:
         # Construir el nombre del archivo de salida
         nombre_archivo_output = f'Datos - {nombre_carpeta}.xlsx'
 
@@ -112,22 +111,25 @@ def load(datos=transform()):
         # Crear un escritor de Excel
         with pd.ExcelWriter(carpeta_output, engine='xlsxwriter') as writer:
             # Guardar el DataFrame combinado en la hoja 'Datos'
-            datos.to_excel(writer, sheet_name='Datos', index=False)
+            datos_l.to_excel(writer, sheet_name='Datos', index=False)
 
             # Llamar a la función para crear la hoja 'Dashboard'
-            dashboard(writer, datos)
+            dashboard(writer, datos_l)
 
         print(f"Los datos se han extraído y guardado en {carpeta_output}")
     else:
-        print("No se encontraron datos en ninguno de los archivos.")
+        print("LOAD No se encontraron datos en ninguno de los archivos.")
 
     
 
-if __name__ == "__main__":
-    datos_combinados = extract(path)
+def excelETL():
+    datos_combinados = pd.DataFrame(extract(carpeta_input= path))
     
     if datos_combinados.empty:
-        print("No se encontraron datos en ninguno de los archivos.")
+        print("ETL No se encontraron datos en ninguno de los archivos.")
     else:
         datos_transformados = transform(datos_combinados)
         load(datos_transformados)
+
+if __name__ == "__main__":
+    excelETL()
