@@ -2,18 +2,17 @@ import os
 import pandas as pd
 import xlrd
 import secret
+import lxp_wscrap
 
-# Ruta de la carpeta que contiene los archivos Excel
-path = secret.download_path
+
+
 
 # Extraer el nombre de la carpeta
-nombre_carpeta = os.path.basename(path)
+carpeta_padre = secret.carpeta_descargas
 
-# Obtener la ruta del directorio superior (carpeta padre)
-carpeta_padre = os.path.abspath(os.path.join(path, os.pardir))
 
-def extract(carpeta_input):
-
+def extract(carpeta_input, cliente):
+    
     # Lista para almacenar los datos de cada hoja de cada archivo
     datos = []
 
@@ -42,10 +41,14 @@ def extract(carpeta_input):
                 if not df_seleccionado.empty:
                     # Agregar los datos a la lista
                     datos.append(df_seleccionado)
+                    print(f"datos agregados desde {archivo}")
+                    
+                    
                 else:
                     print(f"No hay datos en la hoja '{nombre_hoja}' del archivo: {archivo}")
     if not len(datos) == 0:
         datos_combinados = pd.concat(datos, ignore_index=True)
+        print(f"Todos los datos de {cliente} han sido añadidos")
         return datos_combinados
 
 def transform(datos_t):
@@ -100,36 +103,44 @@ def dashboard(writer, datos):
 
 
 
-def load(datos_l):
+def load(datos_l, cliente):
     if not datos_l.empty:
         # Construir el nombre del archivo de salida
-        nombre_archivo_output = f'Datos - {nombre_carpeta}.xlsx'
+        nombre_archivo_output = f'Datos - {cliente}.xlsx'
 
         # Ruta del directorio superior (carpeta padre)
-        carpeta_output = os.path.join(carpeta_padre, nombre_archivo_output)
+        carpeta_output = os.path.join(carpeta_padre, cliente, nombre_archivo_output)
 
         # Crear un escritor de Excel
         with pd.ExcelWriter(carpeta_output, engine='xlsxwriter') as writer:
             # Guardar el DataFrame combinado en la hoja 'Datos'
             datos_l.to_excel(writer, sheet_name='Datos', index=False)
 
-            # Llamar a la función para crear la hoja 'Dashboard'
-            dashboard(writer, datos_l)
+            # # Llamar a la función para crear la hoja 'Dashboard'
+            # dashboard(writer, datos_l)
+        
+        
 
         print(f"Los datos se han extraído y guardado en {carpeta_output}")
     else:
-        print("LOAD No se encontraron datos en ninguno de los archivos.")
+        print("LOAD: No se encontraron datos en ninguno de los archivos.")
 
     
 
 def excelETL():
-    datos_combinados = pd.DataFrame(extract(carpeta_input= path))
-    
-    if datos_combinados.empty:
-        print("ETL No se encontraron datos en ninguno de los archivos.")
-    else:
-        datos_transformados = transform(datos_combinados)
-        load(datos_transformados)
+    for cliente in lxp_wscrap.client_list:
+        datos_combinados = pd.DataFrame(extract(carpeta_input= os.path.join(carpeta_padre,cliente), cliente=cliente))
+        
+        if datos_combinados.empty:
+            print("ETL No se encontraron datos en ninguno de los archivos.")
+        else:
+            datos_transformados = transform(datos_combinados)
+            load(datos_l= datos_transformados, cliente=cliente)
+        
+        for archivo in os.listdir(os.path.join(secret.carpeta_descargas,cliente)):
+            if archivo.endswith('.xls'):
+                delete_path = os.path.join(secret.carpeta_descargas, cliente, archivo)
+                os.remove(delete_path)
 
 if __name__ == "__main__":
     excelETL()
