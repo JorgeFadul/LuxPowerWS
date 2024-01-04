@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import secret
-import lxp_wscrap
 
 carpeta_padre = secret.carpeta_descargas
 
@@ -102,18 +101,23 @@ def dataframe_cliente(df_tiempo, df, cliente):
     return df_combinado
 
 
-def grafica_dataframe(dataframe):
+def grafica_dataframe(dataframe, cliente):
     plt.figure(figsize=(10, 6))
     plt.plot(dataframe["Time"], dataframe['Prom pLoad'], color='blue', marker='.')
     date_form = DateFormatter("%H,%M,%S")
     plt.gca().xaxis.set_major_formatter(date_form)
     plt.gcf().autofmt_xdate()
-    plt.title('Gráfica de Time vs Prom pLoad')
-    plt.xlabel('Time')
+    nombre_grafica = f'{cliente} - Prom pLoad'
+    plt.title(nombre_grafica)
+    plt.xlabel('Tiempo')
     plt.ylabel('Prom pLoad')
-    plt.show()
+    plt.savefig(os.path.join(carpeta_padre, cliente, f"{nombre_grafica}.png"))
+    plt.savefig(os.path.join(carpeta_padre, cliente, f"{nombre_grafica}.jpg"), dpi=300)
 
 def main_consumo():
-    for cliente in lxp_wscrap.client_list:
-        dataframe_cliente(df_tiempo=dataframe_tiempo(), df= dataframe_creación(cliente), cliente=cliente)
+    lista_clientes = [str(line.strip()) for line in open(secret.archivo_lista_clientes, "r", encoding="utf-8")]
+    for cliente in lista_clientes:
+        df = dataframe_cliente(df_tiempo=dataframe_tiempo(), df= dataframe_creación(cliente), cliente=cliente)
+        grafica_dataframe(dataframe=df, cliente=cliente)
+
 

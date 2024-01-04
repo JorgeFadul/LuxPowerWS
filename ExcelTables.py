@@ -2,8 +2,6 @@ import os
 import pandas as pd
 import xlrd
 import secret
-import lxp_wscrap
-
 
 
 
@@ -128,7 +126,8 @@ def load(datos_l, cliente):
     
 
 def excelETL():
-    for cliente in lxp_wscrap.client_list:
+    lista_clientes = [str(line.strip()) for line in open(secret.archivo_lista_clientes, "r", encoding="utf-8")]
+    for cliente in lista_clientes:
         datos_combinados = pd.DataFrame(extract(carpeta_input= os.path.join(carpeta_padre,cliente), cliente=cliente))
         
         if datos_combinados.empty:

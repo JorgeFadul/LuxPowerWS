@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import secret
 import time
+import os
 
 client_list = []
 
@@ -64,6 +65,11 @@ class Browser:
             client_list.append(station_name)
         
         print(f"Lista de Clientes: {client_list}")
+        
+        with open(secret.archivo_lista_clientes, "w", encoding='utf-8') as file:
+            for cliente in client_list:
+                file.write(str(cliente) + "\n")
+        print(f"Se ha actualizado y guardado la lista de clientes en {secret.archivo_lista_clientes}")
             
     def download_data_tables(self):
         for index, client in enumerate(client_list):
@@ -78,7 +84,7 @@ class Browser:
             time.sleep(1)
             button = self.browser.find_element(By.ID, "exportMoreDataButton")
             self.browser.execute_script("arguments[0].click();", button)
-            time.sleep(18)
+            time.sleep(5)
             secret.mover_archivos_a_subcarpeta(carpeta_origen=secret.carpeta_descargas, nombre_subcarpeta=client)
             print(f"Terminada la descarga con el cliente: {client}")
             
