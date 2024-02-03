@@ -5,7 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import secret
 import time
-import os
 
 client_list = []
 
@@ -73,6 +72,7 @@ class Browser:
             
     def download_data_tables(self):
         for index, client in enumerate(client_list):
+            print(f"Inicio de descarga de datos del cliente: {client}")
             time.sleep(1)
             dropdown_list_btn = self.browser.find_element(by=By.XPATH, value="/html/body/div[1]/div[1]/div[2]/span/span/a")
             self.browser.execute_script("arguments[0].click();", dropdown_list_btn)

@@ -9,6 +9,8 @@ carpeta_padre = secret.carpeta_descargas
 
 
 def dataframe_creación(cliente):
+    global fecha_inicial
+    global fecha_final
     nombre_archivo_output = f'Datos - {cliente}.xlsx'
     archivo = os.path.join(carpeta_padre, cliente, nombre_archivo_output)
 
@@ -34,6 +36,9 @@ def dataframe_creación(cliente):
     # Concatena las listas de filas en DataFrames
     for fecha, filas in dataframes_por_fecha.items():
         dataframes_por_fecha[fecha] = pd.DataFrame(filas, columns=['Time', 'pLoad']).reset_index(drop=True).drop_duplicates()
+
+    fecha_inicial = list(dataframes_por_fecha.keys())[0]
+    fecha_final = list(dataframes_por_fecha.keys())[-1]
     
     return dataframes_por_fecha
 
@@ -109,9 +114,9 @@ def grafica_dataframe(dataframe, cliente):
     plt.gcf().autofmt_xdate()
     nombre_grafica = f'{cliente} - Prom pLoad'
     plt.title(nombre_grafica)
-    plt.xlabel('Tiempo')
+    plt.xlabel(f'Tiempo -- {fecha_inicial} - {fecha_final}')
     plt.ylabel('Prom pLoad')
-    plt.savefig(os.path.join(carpeta_padre, cliente, f"{nombre_grafica}.png"))
+    # plt.savefig(os.path.join(carpeta_padre, cliente, f"{nombre_grafica}.png"))
     plt.savefig(os.path.join(carpeta_padre, cliente, f"{nombre_grafica}.jpg"), dpi=300)
 
 def main_consumo():
